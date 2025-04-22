@@ -34,5 +34,5 @@ def analyze_dataframe(pipe, df):
         "・必要に応じて追加の前処理や可視化の提案をしてください。\n"
     )
     # 生成
-    result = pipe(prompt, max_length=512, do_sample=False)[0]["generated_text"]
+    result = pipe(prompt, max_length=8024, do_sample=False)[0]["generated_text"]
     return result.replace(prompt, "").strip()
