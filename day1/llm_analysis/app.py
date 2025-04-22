@@ -22,8 +22,8 @@ if 'page' not in st.session_state:
     st.session_state.page = "チャット"
 page = st.sidebar.radio(
     "ページ選択",
-    ["チャット", "履歴閲覧", "サンプルデータ管理", "データ分析"],
-    index=["チャット", "履歴閲覧", "サンプルデータ管理", "データ分析"].index(st.session_state.page),
+    ["データ分析"],
+    index=["データ分析"].index(st.session_state.page),
     on_change=lambda: setattr(st.session_state, 'page', st.session_state.page_selector),
     key="page_selector"
 )
