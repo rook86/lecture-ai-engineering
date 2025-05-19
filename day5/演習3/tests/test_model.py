@@ -3,6 +3,7 @@ import pytest
 import pandas as pd
 import numpy as np
 import pickle
+import json
 import time
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
@@ -17,6 +18,8 @@ DATA_PATH = os.path.join(os.path.dirname(__file__), "../data/Titanic.csv")
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "../models")
 MODEL_PATH = os.path.join(MODEL_DIR, "titanic_model.pkl")
 
+# golden_master.json のパスを決め打ち
+BASELINE_PATH = os.path.join(os.path.dirname(__file__), "golden_master.json")
 
 @pytest.fixture
 def sample_data():
@@ -72,6 +75,13 @@ def preprocessor():
 
     return preprocessor
 
+@pytest.fixture(scope="session")
+def baseline_metrics():
+    """Golden Master の基準値を読み込む"""
+    if not os.path.exists(BASELINE_PATH):
+        pytest.skip(f"Baseline file not found: {BASELINE_PATH}")
+    with open(BASELINE_PATH, "r") as f:
+        return json.load(f)
 
 @pytest.fixture
 def train_model(sample_data, preprocessor):
@@ -118,11 +128,26 @@ def test_model_accuracy(train_model):
     accuracy = accuracy_score(y_test, y_pred)
 
     # Titanicデータセットでは0.75以上の精度が一般的に良いとされる
-    # assert accuracy >= 0.75, f"モデルの精度が低すぎます: {accuracy}"
+    assert accuracy >= 0.75, f"モデルの精度が低すぎます: {accuracy}"
 
-    # 精度を表示
-    print(f"モデル精度: {accuracy:.4f}")
+def test_accuracy_vs_golden_master(train_model, baseline_metrics):
+    """
+    現在のモデル精度を Golden Master 精度と比較して、
+    2% 以上の低下があれば失敗させる
+    """
+    model, X_test, y_test = train_model
+    y_pred = model.predict(X_test)
+    current_acc = accuracy_score(y_test, y_pred)
+    baseline_acc = baseline_metrics["accuracy"]
 
+    # 許容ドロップ率（2%）
+    allowed_drop = 0.02
+    drop_rate = (baseline_acc - current_acc) / baseline_acc
+
+    assert drop_rate <= allowed_drop, (
+        f"Accuracy dropped by {drop_rate*100:.2f}% で許容上限を超えました "
+        f"(baseline: {baseline_acc:.4f}, current: {current_acc:.4f})"
+    )
 
 def test_model_inference_time(train_model):
     """モデルの推論時間を検証"""
@@ -136,10 +161,7 @@ def test_model_inference_time(train_model):
     inference_time = end_time - start_time
 
     # 推論時間が1秒未満であることを確認
-    # assert inference_time < 1.0, f"推論時間が長すぎます: {inference_time}秒"
-
-    # 推論時間を表示
-    print(f"推論時間: {inference_time:.4f} 秒")
+    assert inference_time < 1.0, f"推論時間が長すぎます: {inference_time}秒"
 
 
 def test_model_reproducibility(sample_data, preprocessor):
