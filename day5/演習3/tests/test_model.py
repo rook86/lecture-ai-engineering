@@ -21,6 +21,7 @@ MODEL_PATH = os.path.join(MODEL_DIR, "titanic_model.pkl")
 # golden_master.json のパスを決め打ち
 BASELINE_PATH = os.path.join(os.path.dirname(__file__), "golden_master.json")
 
+
 @pytest.fixture
 def sample_data():
     """テスト用データセットを読み込む"""
@@ -75,6 +76,7 @@ def preprocessor():
 
     return preprocessor
 
+
 @pytest.fixture(scope="session")
 def baseline_metrics():
     """Golden Master の基準値を読み込む"""
@@ -82,6 +84,7 @@ def baseline_metrics():
         pytest.skip(f"Baseline file not found: {BASELINE_PATH}")
     with open(BASELINE_PATH, "r") as f:
         return json.load(f)
+
 
 @pytest.fixture
 def train_model(sample_data, preprocessor):
@@ -130,6 +133,7 @@ def test_model_accuracy(train_model):
     # Titanicデータセットでは0.75以上の精度が一般的に良いとされる
     assert accuracy >= 0.75, f"モデルの精度が低すぎます: {accuracy}"
 
+
 def test_accuracy_vs_golden_master(train_model, baseline_metrics):
     """
     現在のモデル精度を Golden Master 精度と比較して、
@@ -148,6 +152,7 @@ def test_accuracy_vs_golden_master(train_model, baseline_metrics):
         f"Accuracy dropped by {drop_rate*100:.2f}% で許容上限を超えました "
         f"(baseline: {baseline_acc:.4f}, current: {current_acc:.4f})"
     )
+
 
 def test_model_inference_time(train_model):
     """モデルの推論時間を検証"""
