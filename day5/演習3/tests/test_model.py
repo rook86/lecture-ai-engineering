@@ -123,6 +123,7 @@ def test_model_accuracy(train_model):
     # 精度を表示
     print(f"モデル精度: {accuracy:.4f}")
 
+
 def test_model_inference_time(train_model):
     """モデルの推論時間を検証"""
     model, X_test, _ = train_model
